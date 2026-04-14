@@ -1,0 +1,20 @@
+[
+    {
+        "query": "Why are dogs loyal?",
+        "relevant_docs": [
+            "doc1_0"
+        ]
+    },
+    {
+        "query": "What is the capital of France?",
+        "relevant_docs": [
+            "doc2_0"
+        ]
+    },
+    {
+        "query": "Where is Eiffel Tower?",
+        "relevant_docs": [
+            "doc2_0"
+        ]
+    }
+]
