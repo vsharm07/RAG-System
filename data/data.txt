@@ -1,5 +1,139 @@
-Dogs are loyal animals. They are great companions because they are friendly and protective.
+### Document 1: Dog Behavior
 
-Paris is the capital of France. It is known for the Eiffel Tower.
+Dogs are loyal animals. They form strong emotional bonds with humans.
+They are protective and often act as guardians.
+Dogs are used in therapy and emotional support.
+
+---
+
+### Document 2: Pet Care
+
+Dogs require proper nutrition and regular exercise.
+Vaccination is important to prevent diseases.
+Regular vet visits ensure long-term health.
+
+---
+
+### Document 3: France Travel
+
+Paris is the capital of France. It is known for landmarks like the Eiffel Tower.
+France is a popular tourist destination with rich culture and cuisine.
+
+---
+
+### Document 4: Eiffel Tower
+
+The Eiffel Tower is located in Paris, France.
+It was constructed in 1889 and is one of the most famous monuments in the world.
+
+---
+
+### Document 5: Python Programming
 
 Python is widely used for backend development and machine learning.
+It supports frameworks like Django and Flask.
+
+---
+
+### Document 6: Machine Learning
+
+Machine learning is a subset of artificial intelligence.
+Python is commonly used due to libraries like NumPy and TensorFlow.
+
+---
+
+### Document 7: Dog Training
+
+Positive reinforcement is one of the most effective dog training methods.
+Dogs learn commands faster when rewards are immediate and consistent.
+
+---
+
+### Document 8: Cat Behavior
+
+Cats are often more independent than dogs and communicate through body language.
+They may purr when relaxed, but they can also hide stress signs quietly.
+
+---
+
+### Document 9: Germany Travel
+
+Berlin is the capital of Germany and is known for its history and museums.
+The city has major landmarks such as the Brandenburg Gate and the Berlin Wall memorial.
+
+---
+
+### Document 10: Italy Travel
+
+Rome is the capital of Italy and is famous for the Colosseum and ancient ruins.
+Italy attracts visitors for art, food, and historical architecture.
+
+---
+
+### Document 11: Java Programming
+
+Java is commonly used for enterprise backend systems and large business applications.
+It is popular in banking, Android development, and distributed systems.
+
+---
+
+### Document 12: Deep Learning
+
+Deep learning is a branch of machine learning based on neural networks.
+It is used in image recognition, speech processing, and language modeling.
+
+---
+
+### Document 13: Cloud Computing
+
+Cloud computing provides on-demand access to servers, storage, and networking resources.
+Organizations use cloud platforms to scale applications without managing physical hardware.
+
+---
+
+### Document 14: Cybersecurity Basics
+
+Cybersecurity focuses on protecting systems, networks, and data from digital attacks.
+Common controls include authentication, encryption, and regular patching.
+
+---
+
+### Document 15: Basketball
+
+Basketball is played between two teams that score by shooting a ball through a hoop.
+Players need coordination, teamwork, and quick decision making.
+
+---
+
+### Document 16: Renewable Energy
+
+Solar and wind power are major forms of renewable energy.
+They help reduce dependence on fossil fuels and lower carbon emissions.
+
+---
+
+### Document 17: Databases
+
+Relational databases store structured data in tables with rows and columns.
+SQL is used to query, insert, update, and manage the stored information.
+
+---
+
+### Document 18: Linux Administration
+
+Linux servers are widely used in production because they are stable and configurable.
+System administrators manage services, permissions, logs, and automation scripts.
+
+---
+
+### Document 19: Kubernetes
+
+Kubernetes is used to orchestrate containers across clusters of machines.
+It helps manage deployment, scaling, networking, and service availability.
+
+---
+
+### Document 20: Networking Fundamentals
+
+Routers forward packets between networks, while switches connect devices within a local network.
+Protocols such as TCP and IP are foundational to internet communication.

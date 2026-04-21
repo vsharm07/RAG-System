@@ -6,10 +6,14 @@ class VectorRetriever:
         results = self.vector_store.similarity_search(query, k=top_k)
 
         docs = []
-        for r in results:
+        for rank, r in enumerate(results, start=1):
             docs.append({
                 "text": r.page_content,
-                "metadata": r.metadata
+                "metadata": r.metadata,
+                "chunk_id": r.metadata.get("chunk_id"),
+                "retrieval_scores": {
+                    "vector_rank": rank,
+                },
             })
 
         return docs

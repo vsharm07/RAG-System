@@ -1,42 +1,51 @@
-from ingestion.chunker import Chunker
-from retrieval.vector_retriever import VectorRetriever
-from retrieval.bm25_retriever import BM25Retriever
-from retrieval.hybrid_retriever import HybridRetriever
-from retrieval.reranker import Reranker
 from generation.prompt import build_prompt
+from utils.query_cache import query_cache
 
 
-def run(query, vector_store, documents, llm):
+def build_rewrite_prompt(query):
+    return f"""
+Rewrite the user question into a short standalone search query for retrieval.
+Preserve the original meaning.
+Resolve ambiguous references only if the intent is clear from the question.
+Return only the rewritten query.
 
-    # Step 1: Chunk (if not precomputed)
-    chunker = Chunker()
-    chunks = chunker.chunk(documents)
-    print("chunksssssssssss", chunks)
-    # Step 2: Retrievers
-    vector_retriever = VectorRetriever(vector_store)
-    bm25_retriever = BM25Retriever(chunks)
+Question:
+{query}
+"""
 
-    hybrid = HybridRetriever(vector_retriever, bm25_retriever)
 
-    # Step 3: Retrieve
-    retrieved_docs = hybrid.retrieve(query)
+def rewrite_query(query, llm):
+    try:
+        rewritten_query = llm.invoke(build_rewrite_prompt(query)).strip()
+    except Exception:
+        return query
 
-    print("\n--- Retrieved Docs ---")
-    for d in retrieved_docs[:3]:
-        print(d["text"][:100])
+    if not rewritten_query:
+        return query
 
-    # Step 4: Rerank
-    reranker = Reranker()
-    top_docs = reranker.rerank(query, retrieved_docs)
+    return rewritten_query.splitlines()[0].strip()
 
-    print("\n--- After Rerank ---")
-    for d in top_docs:
-        print(d["text"][:100])
 
-    # Step 5: Prompt
+def run(query, pipeline, llm):
+    cache_namespace = pipeline.get("cache_namespace")
+    cached_result = query_cache.get(query, namespace=cache_namespace)
+    if cached_result is not None:
+        return cached_result["answer"]
+
+    rewritten_query = rewrite_query(query, llm)
+    retrieved_docs = pipeline["retriever"].retrieve(rewritten_query)
+    top_docs = pipeline["reranker"].rerank(rewritten_query, retrieved_docs)
     prompt = build_prompt(query, top_docs)
-
-    # Step 6: LLM
     answer = llm.invoke(prompt)
+    query_cache.set(
+        query,
+        {
+            "rewritten_query": rewritten_query,
+            "retrieved_docs": retrieved_docs,
+            "reranked_docs": top_docs,
+            "answer": answer,
+        },
+        namespace=cache_namespace,
+    )
 
     return answer

@@ -17,7 +17,6 @@ class Reranker:
 
         pairs = [(query, doc["text"]) for doc in docs]
         scores = self.model.predict(pairs)
-
         ranked = sorted(
             zip(docs, scores),
             key=lambda x: x[1],

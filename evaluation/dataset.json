@@ -2,19 +2,87 @@
     {
         "query": "Why are dogs loyal?",
         "relevant_docs": [
-            "doc1_0"
+            "doc0_1"
         ]
     },
     {
         "query": "What is the capital of France?",
         "relevant_docs": [
-            "doc2_0"
+            "doc2_1"
         ]
     },
     {
         "query": "Where is Eiffel Tower?",
         "relevant_docs": [
-            "doc2_0"
+            "doc2_1",
+            "doc3_1"
+        ]
+    },
+    {
+        "query": "What is Python used for?",
+        "relevant_docs": [
+            "doc4_1",
+            "doc5_1"
+        ]
+    },
+    {
+        "query": "How do dogs learn during training?",
+        "relevant_docs": [
+            "doc6_1"
+        ]
+    },
+    {
+        "query": "What is the capital of Germany?",
+        "relevant_docs": [
+            "doc8_1"
+        ]
+    },
+    {
+        "query": "What is the capital of Italy?",
+        "relevant_docs": [
+            "doc9_1"
+        ]
+    },
+    {
+        "query": "Where is Java used?",
+        "relevant_docs": [
+            "doc10_1"
+        ]
+    },
+    {
+        "query": "What is deep learning used for?",
+        "relevant_docs": [
+            "doc11_1"
+        ]
+    },
+    {
+        "query": "What does cloud computing provide?",
+        "relevant_docs": [
+            "doc12_1"
+        ]
+    },
+    {
+        "query": "How does cybersecurity protect systems?",
+        "relevant_docs": [
+            "doc13_1"
+        ]
+    },
+    {
+        "query": "What is SQL used for?",
+        "relevant_docs": [
+            "doc16_1"
+        ]
+    },
+    {
+        "query": "What does Kubernetes manage?",
+        "relevant_docs": [
+            "doc18_1"
+        ]
+    },
+    {
+        "query": "What do routers do in a network?",
+        "relevant_docs": [
+            "doc19_1"
         ]
     }
 ]
