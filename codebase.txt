@@ -1,0 +1,600 @@
+﻿========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\embeddings.py ==========
+import ollama
+import numpy as np
+
+EMBED_MODEL = "nomic-embed-text"
+EMBEDDING_DIM = 768  # explicit â€” catches mismatches early
+
+def get_embedding(text: str) -> np.ndarray:
+    response = ollama.embeddings(model=EMBED_MODEL, prompt=text)
+    return np.array(response["embedding"], dtype=np.float32)
+
+def get_embeddings_batch(texts: list[str]) -> np.ndarray:
+    """Embed multiple chunks â€” much faster than looping get_embedding()."""
+    embeddings = [
+        ollama.embeddings(model=EMBED_MODEL, prompt=t)["embedding"]
+        for t in texts
+    ]
+    return np.array(embeddings, dtype=np.float32)
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\evaluation\evaluate_retrieval.py ==========
+import math
+
+
+def recall_at_k(retrieved_ids, relevant_ids):
+    if not relevant_ids:
+        return 0.0
+    return len(set(retrieved_ids) & set(relevant_ids)) / len(relevant_ids)
+
+
+def reciprocal_rank(retrieved_ids, relevant_ids):
+    relevant_set = set(relevant_ids)
+
+    for rank, chunk_id in enumerate(retrieved_ids, start=1):
+        if chunk_id in relevant_set:
+            return 1.0 / rank
+
+    return 0.0
+
+
+def dcg_at_k(retrieved_ids, relevant_ids, k):
+    relevant_set = set(relevant_ids)
+    dcg = 0.0
+
+    for rank, chunk_id in enumerate(retrieved_ids[:k], start=1):
+        if chunk_id in relevant_set:
+            dcg += 1.0 / math.log2(rank + 1)
+
+    return dcg
+
+
+def ndcg_at_k(retrieved_ids, relevant_ids, k):
+    if not relevant_ids:
+        return 0.0
+
+    ideal_hits = min(k, len(relevant_ids))
+    ideal_ids = list(relevant_ids)[:ideal_hits]
+    ideal_dcg = dcg_at_k(ideal_ids, ideal_ids, ideal_hits)
+    if ideal_dcg == 0:
+        return 0.0
+
+    return dcg_at_k(retrieved_ids, relevant_ids, k) / ideal_dcg
+
+
+def get_chunk_id(doc):
+    if doc.get("chunk_id"):
+        return doc["chunk_id"]
+
+    metadata = doc.get("metadata") or {}
+    return metadata.get("chunk_id")
+
+
+def evaluate(dataset, retriever, reranker=None, retrieve_k=20, final_k=5):
+    recall_at_1_scores = []
+    recall_at_3_scores = []
+    recall_at_5_scores = []
+    mrr_scores = []
+    ndcg_at_5_scores = []
+
+    for item in dataset:
+        query = item["query"]
+        relevant = item["relevant_docs"]
+
+        docs = retriever.retrieve(query, top_k=retrieve_k)
+        final_docs = reranker.rerank(query, docs, top_k=final_k) if reranker is not None else docs[:final_k]
+        retrieved_ids = [get_chunk_id(doc) for doc in final_docs]
+
+        recall_at_1 = recall_at_k(retrieved_ids[:1], relevant)
+        recall_at_3 = recall_at_k(retrieved_ids[:3], relevant)
+        recall_at_5 = recall_at_k(retrieved_ids[:5], relevant)
+        mrr = reciprocal_rank(retrieved_ids, relevant)
+        ndcg = ndcg_at_k(retrieved_ids, relevant, 5)
+
+        print(f"\nQuery: {query}")
+        print("Retrieved:", retrieved_ids)
+        print("Relevant:", relevant)
+        print("Recall@1:", recall_at_1)
+        print("Recall@3:", recall_at_3)
+        print("Recall@5:", recall_at_5)
+        print("Reciprocal Rank:", mrr)
+        print("nDCG@5:", ndcg)
+
+        recall_at_1_scores.append(recall_at_1)
+        recall_at_3_scores.append(recall_at_3)
+        recall_at_5_scores.append(recall_at_5)
+        mrr_scores.append(mrr)
+        ndcg_at_5_scores.append(ndcg)
+
+    avg_recall_at_1 = sum(recall_at_1_scores) / len(recall_at_1_scores)
+    avg_recall_at_3 = sum(recall_at_3_scores) / len(recall_at_3_scores)
+    avg_recall_at_5 = sum(recall_at_5_scores) / len(recall_at_5_scores)
+    avg_mrr = sum(mrr_scores) / len(mrr_scores)
+    avg_ndcg_at_5 = sum(ndcg_at_5_scores) / len(ndcg_at_5_scores)
+
+    print("\nAverage Recall@1:", avg_recall_at_1)
+    print("Average Recall@3:", avg_recall_at_3)
+    print("Average Recall@5:", avg_recall_at_5)
+    print("Average MRR:", avg_mrr)
+    print("Average nDCG@5:", avg_ndcg_at_5)
+
+    return {
+        "recall@1": avg_recall_at_1,
+        "recall@3": avg_recall_at_3,
+        "recall@5": avg_recall_at_5,
+        "mrr": avg_mrr,
+        "ndcg@5": avg_ndcg_at_5,
+    }
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\evaluation\run_eval.py ==========
+import json
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from evaluation.evaluate_retrieval import evaluate
+from ingestion.chunker import Chunker
+from retrieval.bm25_retriever import BM25Retriever
+from retrieval.hybrid_retriever import HybridRetriever
+from retrieval.reranker import Reranker
+from retrieval.vector_retriever import VectorRetriever
+from run_rag import build_vector_store, load_documents
+
+
+def load_dataset():
+    with (PROJECT_ROOT / "evaluation" / "dataset.json").open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def main():
+    documents = load_documents()
+    chunker = Chunker()
+    chunks = chunker.chunk(documents)
+    vector_store = build_vector_store(chunks)
+    vector = VectorRetriever(vector_store)
+    bm25 = BM25Retriever(chunks)
+    hybrid = HybridRetriever(vector, bm25)
+    reranker = Reranker()
+    dataset = load_dataset()
+    evaluate(dataset, hybrid, reranker=reranker)
+
+
+if __name__ == "__main__":
+    main()
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\generation\prompt.py ==========
+def build_prompt(query, contexts):
+    context_text = "\n\n".join([c["text"] for c in contexts])
+
+    prompt = f"""
+You are a helpful assistant.
+
+Answer ONLY from the context below.
+If the answer is not present, say "I don't know".
+
+Context:
+{context_text}
+
+Question:
+{query}
+"""
+    return prompt
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\ingestion\chunker.py ==========
+import hashlib
+
+class Chunker:
+    def __init__(self, max_chars=1800, overlap_sentences=1):
+        self.max_chars = max_chars        # ~450 tokens @ 4 chars/token
+        self.overlap_sentences = overlap_sentences
+
+    def _split_sentences(self, text):
+        # Naive sentence splitter â€” swap for spaCy/nltk if needed
+        import re
+        return re.split(r'(?<=[.!?])\s+', text.strip())
+
+    def chunk(self, documents):
+        chunks = []
+        skipped = 0
+
+        for doc in documents:
+            paragraphs = doc["text"].split("\n\n")
+
+            for para in paragraphs:
+                para = para.strip()
+                if len(para) < 50:
+                    skipped += 1
+                    continue
+
+                if len(para) <= self.max_chars:
+                    chunks.append(self._make_chunk(para, doc["doc_id"]))
+                else:
+                    # Split long paragraph into overlapping sentence windows
+                    sentences = self._split_sentences(para)
+                    window = []
+                    window_len = 0
+
+                    for sent in sentences:
+                        if window_len + len(sent) > self.max_chars and window:
+                            chunks.append(self._make_chunk(" ".join(window), doc["doc_id"]))
+                            window = window[-self.overlap_sentences:]  # keep overlap
+                            window_len = sum(len(s) for s in window)
+                        window.append(sent)
+                        window_len += len(sent)
+
+                    if window:
+                        chunks.append(self._make_chunk(" ".join(window), doc["doc_id"]))
+
+        print(f"[Chunker] {len(chunks)} chunks created, {skipped} short paragraphs skipped")
+        return chunks
+
+    def _make_chunk(self, text, doc_id):
+        chunk_id = f"{doc_id}_{hashlib.md5(text.encode()).hexdigest()[:8]}"
+        return {"text": text, "doc_id": doc_id, "chunk_id": chunk_id}
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\llm.py ==========
+import requests
+
+def call_llm(prompt):
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+
+    return response.json()["response"]
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\main.py ==========
+from generation.prompt import build_prompt
+from utils.query_cache import query_cache
+
+
+def build_rewrite_prompt(query):
+    return f"""
+Rewrite the user question into a short standalone search query for retrieval.
+Preserve the original meaning.
+Resolve ambiguous references only if the intent is clear from the question.
+Return only the rewritten query.
+
+Question:
+{query}
+"""
+
+
+def rewrite_query(query, llm):
+    try:
+        rewritten_query = llm.invoke(build_rewrite_prompt(query)).strip()
+    except Exception:
+        return query
+
+    if not rewritten_query:
+        return query
+
+    return rewritten_query.splitlines()[0].strip()
+
+
+def run(query, pipeline, llm):
+    cache_namespace = pipeline.get("cache_namespace")
+    cached_result = query_cache.get(query, namespace=cache_namespace)
+    if cached_result is not None:
+        return cached_result["answer"]
+
+    rewritten_query = rewrite_query(query, llm)
+    retrieved_docs = pipeline["retriever"].retrieve(rewritten_query)
+    top_docs = pipeline["reranker"].rerank(rewritten_query, retrieved_docs)
+    prompt = build_prompt(query, top_docs)
+    answer = llm.invoke(prompt)
+    query_cache.set(
+        query,
+        {
+            "rewritten_query": rewritten_query,
+            "retrieved_docs": retrieved_docs,
+            "reranked_docs": top_docs,
+            "answer": answer,
+        },
+        namespace=cache_namespace,
+    )
+
+    return answer
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\retrieval\bm25_retriever.py ==========
+from rank_bm25 import BM25Okapi
+
+
+class BM25Retriever:
+    def __init__(self, documents):
+        self.documents = documents
+        self.texts = [doc["text"] for doc in documents]
+        self.tokenized = [text.lower().split() for text in self.texts]
+        self.bm25 = BM25Okapi(self.tokenized)
+
+    def retrieve(self, query, top_k=20):
+        scores = self.bm25.get_scores(query.lower().split())
+
+        ranked = sorted(
+            zip(self.documents, scores),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        docs = []
+        for rank, (doc, score) in enumerate(ranked[:top_k], start=1):
+            docs.append({
+                "text": doc["text"],
+                "metadata": {
+                    "doc_id": doc.get("doc_id"),
+                    "chunk_id": doc.get("chunk_id"),
+                },
+                "chunk_id": doc.get("chunk_id"),
+                "retrieval_scores": {
+                    "bm25_score": float(score),
+                    "bm25_rank": rank,
+                },
+            })
+
+        return docs
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\retrieval\hybrid_retriever.py ==========
+class HybridRetriever:
+    def __init__(self, vector_retriever, bm25_retriever):
+        self.vector = vector_retriever
+        self.bm25 = bm25_retriever
+
+    def _get_doc_key(self, doc):
+        if doc.get("chunk_id"):
+            return doc["chunk_id"]
+
+        metadata = doc.get("metadata") or {}
+        if metadata.get("chunk_id"):
+            return metadata["chunk_id"]
+
+        return doc["text"][:200]
+
+    def _merge_scores(self, existing_doc, new_doc):
+        merged_doc = dict(existing_doc)
+        merged_scores = dict(existing_doc.get("retrieval_scores", {}))
+        merged_scores.update(new_doc.get("retrieval_scores", {}))
+        merged_doc["retrieval_scores"] = merged_scores
+        return merged_doc
+
+    def retrieve(self, query, top_k=30):
+        vector_docs = self.vector.retrieve(query, top_k=top_k)
+        bm25_docs = self.bm25.retrieve(query, top_k=top_k)
+
+        fused_scores = {}
+        fused_docs = {}
+        rank_constant = 60
+
+        for rank, doc in enumerate(vector_docs, start=1):
+            key = self._get_doc_key(doc)
+            fused_docs[key] = self._merge_scores(fused_docs[key], doc) if key in fused_docs else doc
+            fused_scores[key] = fused_scores.get(key, 0.0) + 1.0 / (rank_constant + rank)
+
+        for rank, doc in enumerate(bm25_docs, start=1):
+            key = self._get_doc_key(doc)
+            fused_docs[key] = self._merge_scores(fused_docs[key], doc) if key in fused_docs else doc
+            fused_scores[key] = fused_scores.get(key, 0.0) + 1.0 / (rank_constant + rank)
+
+        ranked_keys = sorted(fused_scores, key=lambda key: fused_scores[key], reverse=True)
+
+        results = []
+        for rank, key in enumerate(ranked_keys[:top_k], start=1):
+            doc = dict(fused_docs[key])
+            retrieval_scores = dict(doc.get("retrieval_scores", {}))
+            retrieval_scores["hybrid_rrf_score"] = fused_scores[key]
+            retrieval_scores["hybrid_rank"] = rank
+            doc["retrieval_scores"] = retrieval_scores
+            results.append(doc)
+
+        return results
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\retrieval\query_processor.py ==========
+class QueryProcessor:
+    def rewrite(self, query: str) -> str:
+        q = query.lower()
+
+        if "eiffel tower" in q:
+            return "eiffel tower location paris france"
+
+        if "dogs" in q:
+            return "dogs loyalty behavior animals"
+
+        if "python" in q:
+            return "python programming language backend machine learning"
+
+        return q
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\retrieval\reranker.py ==========
+from pathlib import Path
+
+from sentence_transformers import CrossEncoder
+
+
+class Reranker:
+    def __init__(self):
+        model_path = Path(__file__).resolve().parent.parent / "models" / "reranker"
+        self.model = CrossEncoder(str(model_path))
+
+    def rerank(self, query, docs, top_k=5):
+        if not docs:
+            return []
+
+        if self.model is None:
+            return docs[:top_k]
+
+        pairs = [(query, doc["text"]) for doc in docs]
+        scores = self.model.predict(pairs)
+        ranked = sorted(
+            zip(docs, scores),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return [doc for doc, _ in ranked[:top_k]]
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\retrieval\vector_retriever.py ==========
+class VectorRetriever:
+    def __init__(self, vector_store):
+        self.vector_store = vector_store
+
+    def retrieve(self, query, top_k=20):
+        results = self.vector_store.similarity_search(query, k=top_k)
+
+        docs = []
+        for rank, r in enumerate(results, start=1):
+            docs.append({
+                "text": r.page_content,
+                "metadata": r.metadata,
+                "chunk_id": r.metadata.get("chunk_id"),
+                "retrieval_scores": {
+                    "vector_rank": rank,
+                },
+            })
+
+        return docs
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\run_rag.py ==========
+from pathlib import Path
+from types import SimpleNamespace
+import hashlib
+
+import numpy as np
+
+from embeddings import get_embedding
+from ingestion.chunker import Chunker
+from llm import call_llm
+from main import run
+from retrieval.bm25_retriever import BM25Retriever
+from retrieval.hybrid_retriever import HybridRetriever
+from retrieval.reranker import Reranker
+from retrieval.vector_retriever import VectorRetriever
+from vector_store import create_index
+
+DATA_PATH = Path(__file__).resolve().parent / "data" / "data.txt"
+
+
+def load_documents():
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+
+    docs = text.split("\n---\n")
+
+    documents = []
+    for i, doc in enumerate(docs):
+        documents.append({
+            "text": doc.strip(),
+            "doc_id": f"doc{i}"
+        })
+
+    return documents
+
+
+def build_vector_store(chunks):
+    embeddings = [get_embedding(chunk["text"]) for chunk in chunks]
+    index = create_index(embeddings)
+    return VectorStoreWrapper(index, chunks)
+
+
+def build_pipeline(vector_store, chunks):
+    vector_retriever = VectorRetriever(vector_store)
+    bm25_retriever = BM25Retriever(chunks)
+    hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
+    reranker = Reranker()
+    cache_namespace = build_cache_namespace(chunks)
+
+    return {
+        "retriever": hybrid_retriever,
+        "reranker": reranker,
+        "cache_namespace": cache_namespace,
+    }
+
+
+def build_cache_namespace(chunks):
+    digest = hashlib.sha256()
+
+    for chunk in chunks:
+        digest.update(chunk["chunk_id"].encode("utf-8"))
+        digest.update(b"\n")
+
+    return f"chunks:{len(chunks)}:{digest.hexdigest()[:12]}"
+
+class VectorStoreWrapper:
+    def __init__(self, index, chunks):
+        self.index = index
+        self.chunks = chunks
+
+    def similarity_search(self, query, k=20):
+        query_vector = np.array([get_embedding(query)]).astype("float32")
+        distances, indices = self.index.search(query_vector, k)
+        results = []
+        for i in indices[0]:
+            if 0 <= i < len(self.chunks):
+                chunk = self.chunks[i]
+                results.append(SimpleNamespace(
+                    page_content=chunk["text"],
+                    metadata={
+                        "doc_id": chunk["doc_id"],
+                        "chunk_id": chunk["chunk_id"]
+                    }
+                ))
+        return results
+
+class LLMWrapper:
+    def invoke(self, prompt):
+        return call_llm(prompt)
+
+
+def main():
+    documents = load_documents()
+    chunks = Chunker().chunk(documents)
+    vector_store = build_vector_store(chunks)
+    pipeline = build_pipeline(vector_store, chunks)
+    llm = LLMWrapper()
+
+    query = "why are dogs loyal?"
+    answer = run(query, pipeline, llm)
+    print("answer", answer)
+
+
+if __name__ == "__main__":
+    main()
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\utils\query_cache.py ==========
+class QueryCache:
+    def __init__(self):
+        self._cache = {}
+
+    def _normalize(self, query):
+        return " ".join(query.strip().lower().split())
+
+    def _make_key(self, query, namespace=None):
+        normalized_query = self._normalize(query)
+        if namespace is None:
+            return normalized_query
+
+        return f"{namespace}::{normalized_query}"
+
+    def get(self, query, namespace=None):
+        return self._cache.get(self._make_key(query, namespace=namespace))
+
+    def set(self, query, value, namespace=None):
+        self._cache[self._make_key(query, namespace=namespace)] = value
+
+
+query_cache = QueryCache()
+
+========== C:\Users\vishaks3\OneDrive - Cisco\Documents\Rag-System\vector_store.py ==========
+import faiss
+import numpy as np
+
+def create_index(embeddings):
+    dimension = len(embeddings[0])
+    index = faiss.IndexFlatL2(dimension)
+    index.add(np.array(embeddings).astype("float32"))
+    return index
+

@@ -2,9 +2,10 @@ from pathlib import Path
 from types import SimpleNamespace
 import hashlib
 
+import faiss
 import numpy as np
 
-from embeddings import get_embedding
+from embeddings import get_embedding, get_embeddings_batch
 from ingestion.chunker import Chunker
 from llm import call_llm
 from main import run
@@ -34,7 +35,8 @@ def load_documents():
 
 
 def build_vector_store(chunks):
-    embeddings = [get_embedding(chunk["text"]) for chunk in chunks]
+    texts = [chunk["text"] for chunk in chunks]
+    embeddings = get_embeddings_batch(texts)
     index = create_index(embeddings)
     return VectorStoreWrapper(index, chunks)
 
@@ -69,6 +71,7 @@ class VectorStoreWrapper:
 
     def similarity_search(self, query, k=20):
         query_vector = np.array([get_embedding(query)]).astype("float32")
+        faiss.normalize_L2(query_vector)
         distances, indices = self.index.search(query_vector, k)
         results = []
         for i in indices[0]:

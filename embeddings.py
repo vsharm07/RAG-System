@@ -1,9 +1,17 @@
-from pathlib import Path
+import ollama
+import numpy as np
 
-from sentence_transformers import SentenceTransformer
+EMBED_MODEL = "nomic-embed-text"
+EMBEDDING_DIM = 768  # explicit — catches mismatches early
 
-MODEL_PATH = Path(__file__).resolve().parent / "models" / "embedder" / "all-MiniLM-L6-v2"
-model = SentenceTransformer(str(MODEL_PATH), local_files_only=True)
+def get_embedding(text: str) -> np.ndarray:
+    response = ollama.embeddings(model=EMBED_MODEL, prompt=text)
+    return np.array(response["embedding"], dtype=np.float32)
 
-def get_embedding(text):
-    return model.encode(text)
+def get_embeddings_batch(texts: list[str]) -> np.ndarray:
+    """Embed multiple chunks — much faster than looping get_embedding()."""
+    embeddings = [
+        ollama.embeddings(model=EMBED_MODEL, prompt=t)["embedding"]
+        for t in texts
+    ]
+    return np.array(embeddings, dtype=np.float32)

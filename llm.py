@@ -1,13 +1,5 @@
-import requests
+import ollama
 
 def call_llm(prompt):
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "llama3",
-            "prompt": prompt,
-            "stream": False
-        }
-    )
-
-    return response.json()["response"]
+    response = ollama.generate(model="llama3", prompt=prompt)
+    return response["response"] 

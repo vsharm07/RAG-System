@@ -1,88 +1,63 @@
 [
     {
-        "query": "Why are dogs loyal?",
+        "query": "Which city serves as France's seat of government?",
         "relevant_docs": [
-            "doc0_1"
+            "doc2_2dea1e59"
         ]
     },
     {
-        "query": "What is the capital of France?",
+        "query": "What animal forms the strongest bond with humans?",
         "relevant_docs": [
-            "doc2_1"
+            "doc0_00ff3e66"
         ]
     },
     {
-        "query": "Where is Eiffel Tower?",
+        "query": "Which programming language is popular in AI research?",
         "relevant_docs": [
-            "doc2_1",
-            "doc3_1"
+            "doc4_3f753e12",
+            "doc5_6aab54d7"
         ]
     },
     {
-        "query": "What is Python used for?",
+        "query": "What was built in Paris in the 19th century?",
         "relevant_docs": [
-            "doc4_1",
-            "doc5_1"
+            "doc3_eb6b55e7"
         ]
     },
     {
-        "query": "How do dogs learn during training?",
+        "query": "Which language runs large business applications?",
         "relevant_docs": [
-            "doc6_1"
+            "doc10_b565630e"
         ]
     },
     {
-        "query": "What is the capital of Germany?",
+        "query": "What manages containerized workloads at scale?",
         "relevant_docs": [
-            "doc8_1"
+            "doc18_2ecf52df"
         ]
     },
     {
-        "query": "What is the capital of Italy?",
+        "query": "What protects networks from unauthorized access?",
         "relevant_docs": [
-            "doc9_1"
+            "doc13_8c7cf164"
         ]
     },
     {
-        "query": "Where is Java used?",
+        "query": "Which animal is more independent, dogs or cats?",
         "relevant_docs": [
-            "doc10_1"
+            "doc7_e5502ac3"
         ]
     },
     {
-        "query": "What is deep learning used for?",
+        "query": "What energy sources reduce fossil fuel dependence?",
         "relevant_docs": [
-            "doc11_1"
+            "doc15_f5a6a2b5"
         ]
     },
     {
-        "query": "What does cloud computing provide?",
+        "query": "What query language is used with relational databases?",
         "relevant_docs": [
-            "doc12_1"
-        ]
-    },
-    {
-        "query": "How does cybersecurity protect systems?",
-        "relevant_docs": [
-            "doc13_1"
-        ]
-    },
-    {
-        "query": "What is SQL used for?",
-        "relevant_docs": [
-            "doc16_1"
-        ]
-    },
-    {
-        "query": "What does Kubernetes manage?",
-        "relevant_docs": [
-            "doc18_1"
-        ]
-    },
-    {
-        "query": "What do routers do in a network?",
-        "relevant_docs": [
-            "doc19_1"
+            "doc16_e86629ff"
         ]
     }
 ]

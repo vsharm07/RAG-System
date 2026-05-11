@@ -61,7 +61,14 @@ def evaluate(dataset, retriever, reranker=None, retrieve_k=20, final_k=5):
         relevant = item["relevant_docs"]
 
         docs = retriever.retrieve(query, top_k=retrieve_k)
-        final_docs = reranker.rerank(query, docs, top_k=final_k) if reranker is not None else docs[:final_k]
+        if reranker is not None:
+            final_docs, _ = reranker.rerank(query, docs, top_k=final_k)
+        else:
+            final_docs = docs[:final_k]
+
+        if reranker is not None:
+            print(f"\nReranking results for query: {query}")
+        
         retrieved_ids = [get_chunk_id(doc) for doc in final_docs]
 
         recall_at_1 = recall_at_k(retrieved_ids[:1], relevant)
@@ -84,6 +91,10 @@ def evaluate(dataset, retriever, reranker=None, retrieve_k=20, final_k=5):
         recall_at_5_scores.append(recall_at_5)
         mrr_scores.append(mrr)
         ndcg_at_5_scores.append(ndcg)
+        
+    if not recall_at_1_scores:
+        print("No queries evaluated.")
+        return {}
 
     avg_recall_at_1 = sum(recall_at_1_scores) / len(recall_at_1_scores)
     avg_recall_at_3 = sum(recall_at_3_scores) / len(recall_at_3_scores)

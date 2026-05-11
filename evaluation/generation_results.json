@@ -1,0 +1,102 @@
+[
+  {
+    "query": "Which city serves as France's seat of government?",
+    "answer": "Paris",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'Paris' only includes claims supported by the context, which is that Paris is a city.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly and completely answers the question by identifying the correct seat of government in France.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Chunk 1 was the only relevant information for answering the question."
+  },
+  {
+    "query": "What animal forms the strongest bond with humans?",
+    "answer": "Dogs! They have been known to form incredibly strong bonds with their human companions. In fact, dogs are often considered to be man's best friend.",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "All claims in the answer are supported by the context above.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly and accurately addresses the question, stating that dogs form the strongest bond with humans.",
+    "context_precision": 1.0,
+    "context_precision_reason": "The generated answer relies entirely on the provided chunk."
+  },
+  {
+    "query": "Which programming language is popular in AI research?",
+    "answer": "Python.",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'Python' is fully supported by the provided context.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly and completely answers the question by stating a popular programming language used in AI research.",
+    "context_precision": 1.0,
+    "context_precision_reason": "The retrieved chunk 'Python' directly contributed to the answer."
+  },
+  {
+    "query": "What was built in Paris in the 19th century?",
+    "answer": "The Eiffel Tower was built in Paris in the 19th century.",
+    "faithfulness": 0.5,
+    "faithfulness_reason": "The answer incorrectly specifies the century as '19th', when the context only mentions the year of construction.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly answers the question by specifying a structure built in Paris in the 19th century.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Only Chunk 1 contributed to the answer"
+  },
+  {
+    "query": "Which language runs large business applications?",
+    "answer": "Java.",
+    "faithfulness": 0.75,
+    "faithfulness_reason": "The answer claims Java is popular in banking and distributed systems, which are supported by the context, but it also claims Java is used for Android development, which is not explicitly mentioned in the context.",
+    "answer_relevance": 0.9,
+    "answer_relevance_reason": "The answer correctly identifies Java as a language commonly used for large business applications, demonstrating good understanding of the question.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Chunk 1 was the only chunk that mentioned large business applications and directly linked it to Java."
+  },
+  {
+    "query": "What manages containerized workloads at scale?",
+    "answer": "Kubernetes!",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'Kubernetes!' is fully supported by the context, which mentions nothing about RAG (Resource Allocation and Guaranteeing) or any specific technology, but instead presents a simple prompt to check for faithfulness.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly states that Kubernetes manages containerized workloads at scale.",
+    "context_precision": 1.0,
+    "context_precision_reason": "The answer 'Kubernetes' perfectly matches the question."
+  },
+  {
+    "query": "What protects networks from unauthorized access?",
+    "answer": "Firewall!",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'Firewall!' is fully supported by the context above, which does not provide any additional information that would require the answer to be anything else.",
+    "answer_relevance": 0.8,
+    "answer_relevance_reason": "The answer is relevant to network security, but it does not fully address the question as a firewall is only one type of protection mechanism.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Firewall is the correct answer to protect networks from unauthorized access."
+  },
+  {
+    "query": "Which animal is more independent, dogs or cats?",
+    "answer": "Dogs.",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'Dogs' is entirely contained within the context and does not add any new information.",
+    "answer_relevance": 0.7,
+    "answer_relevance_reason": "The answer attempts to provide a comparison between dogs and cats, but it's incomplete as it doesn't clearly explain why dogs are more independent.",
+    "context_precision": 0.5,
+    "context_precision_reason": "Only one chunk contributed to the answer."
+  },
+  {
+    "query": "What energy sources reduce fossil fuel dependence?",
+    "answer": "According to the context, solar and wind power are the energy sources that help reduce dependence on fossil fuels.",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "All claims in the answer are directly supported by the context and do not add any new information.",
+    "answer_relevance": 0.9,
+    "answer_relevance_reason": "The answer provides a specific and relevant solution to reduce fossil fuel dependence, but could be more comprehensive in its response.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Chunk 1 provided the relevant information that helped answer the question."
+  },
+  {
+    "query": "What query language is used with relational databases?",
+    "answer": "SQL!",
+    "faithfulness": 1.0,
+    "faithfulness_reason": "The answer 'SQL!' is a concise and direct response that accurately reflects the mention of SQL in the context.",
+    "answer_relevance": 1.0,
+    "answer_relevance_reason": "The answer directly addresses the question by providing a precise and accurate response.",
+    "context_precision": 1.0,
+    "context_precision_reason": "Chunk 1 is the only relevant one, and it directly mentions SQL as the query language for relational databases."
+  }
+]

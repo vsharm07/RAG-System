@@ -34,18 +34,49 @@ def run(query, pipeline, llm):
 
     rewritten_query = rewrite_query(query, llm)
     retrieved_docs = pipeline["retriever"].retrieve(rewritten_query)
-    top_docs = pipeline["reranker"].rerank(rewritten_query, retrieved_docs)
-    prompt = build_prompt(query, top_docs)
+
+    # Unpack both results
+    retrieval_docs, generation_docs = pipeline["reranker"].rerank(
+        rewritten_query, retrieved_docs
+    )
+
+    prompt = build_prompt(query, generation_docs)  # ← generation_k chunks
     answer = llm.invoke(prompt)
+
     query_cache.set(
         query,
         {
             "rewritten_query": rewritten_query,
-            "retrieved_docs": retrieved_docs,
-            "reranked_docs": top_docs,
+            "retrieved_docs": retrieval_docs,
+            "reranked_docs": generation_docs,
             "answer": answer,
         },
         namespace=cache_namespace,
     )
-
     return answer
+
+def run_with_context(query, pipeline, llm):
+    rewritten_query = rewrite_query(query, llm)
+    retrieved_docs = pipeline["retriever"].retrieve(rewritten_query)
+
+    # Unpack both — use generation docs for LLM, retrieval docs for eval
+    retrieval_docs, generation_docs = pipeline["reranker"].rerank(
+        rewritten_query, retrieved_docs
+    )
+
+    prompt = build_prompt(query, generation_docs)  # ← only 2-3 chunks
+    answer = llm.invoke(prompt)
+
+    context_texts = [
+        doc.page_content if hasattr(doc, "page_content") else doc.get("text", "")
+        for doc in generation_docs
+    ]
+
+    return {
+        "query": query,
+        "rewritten_query": rewritten_query,
+        "answer": answer,
+        "context_chunks": generation_docs,
+        "context_texts": context_texts,
+        "retrieval_docs": retrieval_docs,  # kept for retrieval eval
+    }

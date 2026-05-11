@@ -1,0 +1,26 @@
+  {
+    "A: current (50/1800)": {
+      "chunk_count": 20,
+      "recall@1": 0.95,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "ndcg@5": 0.9919720789148186
+    },
+    "B: lower min (20/1800)": {
+      "chunk_count": 40,
+      "recall@1": 0.95,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "ndcg@5": 0.9919720789148186
+    },
+    "C: smaller max (20/500)": {
+      "chunk_count": 40,
+      "recall@1": 0.95,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "ndcg@5": 0.9919720789148186
+    }
+  }
